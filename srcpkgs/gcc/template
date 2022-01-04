@@ -61,9 +61,10 @@ checkdepends="dejagnu"
 subpackages="libgcc libgomp libgomp-devel libatomic libatomic-devel"
 subpackages+=" libssp libssp-devel"
 
-build_options="ada gnatboot"
-build_options_default="ada"
+build_options="ada d gnatboot"
+build_options_default="ada d"
 desc_option_ada="Enable Ada build"
+desc_option_d="Enable D build"
 desc_option_gnatboot="Enable Ada bootstrap using adacore.com binaries"
 
 if [ "$build_option_gnatboot" ]; then
@@ -97,6 +98,11 @@ if [ "$_have_gccgo" = "yes" ]; then
 fi
 
 subpackages+=" libstdc++-devel libstdc++ libgcc-devel"
+
+if [ "$build_option_d" ]; then
+	subpackages+=" gcc-gdc libgd libgd-devel libgphobos libgphobos-devel"
+fi
+
 if [ "$build_option_gnatboot" -o "$build_option_ada" ]; then
 	subpackages+=" gcc-ada libada-devel libada"
 fi
@@ -241,6 +247,10 @@ do_configure() {
 		_args+=" --build=${_triplet}"
 	fi
 
+	if [ "build_$option_d" ]; then
+		_langs+=",d"
+	fi
+
 	if [ "$_have_gccgo" = "yes" ]; then
 		_langs+=",go"
 	fi
@@ -367,6 +377,9 @@ do_install() {
 	# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=91085
 	rm -vf ${DESTDIR}/usr/lib/gcc/${_triplet}/${_minorver}/include-fixed/bits/statx.h
 
+	# Remove lib64 symlink
+	rm -vf ${DESTDIR}/usr/lib64
+
 	# Remove libffi stuff.
 	rm -f ${DESTDIR}/usr/lib/libffi*
 	rm -f ${DESTDIR}/usr/share/man/man3/ffi*
@@ -399,6 +412,18 @@ gcc-ada_package() {
 		for f in gnat{,bind,chop,clean,find,kr,link,ls,make,name,prep,xref}; do
 			vmove usr/bin/${f}
 		done
+	}
+}
+
+gcc-gdc_package() {
+	lib32disabled=yes
+	depends="gcc>=${_minorver} libgd-devel>=${_minorver} libgphobos-devel>=${_minorver}"
+	short_desc+=" - D compiler frontend"
+	pkg_install() {
+		vmove usr/bin/gdc
+		vmove usr/bin/${_triplet}-gdc
+		vmove usr/share/man/man1/gdc.1
+		vmove usr/share/info/gdc.info
 	}
 }
 
@@ -479,6 +504,10 @@ gcc-objc_package() {
 		vmove usr/lib/gcc/${_triplet}/${_minorver}/include/objc
 		vmove usr/lib/gcc/${_triplet}/${_minorver}/cc1obj
 	}
+
+
+
+
 }
 
 libada-devel_package() {
@@ -499,6 +528,23 @@ libada_package() {
 	}
 }
 
+libgd-devel_package() {
+	depends="libgd>=${_minorver}"
+	short_desc+=" - D runtime - development files"
+	pkg_install() {
+		vmove usr/lib/libgdruntime.so
+		vmove usr/lib/libgdruntime.a
+		vmove "usr/lib/gcc/${_triplet}/${_minorver}/include/d/*"
+	}
+}
+
+libgd_package() {
+	short_desc+=" - D runtime"
+	pkg_install() {
+		vmove "usr/lib/libgdruntime.so.*"
+	}
+}
+
 libgfortran-devel_package() {
 	depends="libgfortran>=${_minorver}"
 	short_desc+=" - Fortran library - development files"
@@ -516,7 +562,6 @@ libgfortran_package() {
 	short_desc+=" - Fortran library"
 	pkg_install() {
 		vmove "usr/lib/libgfortran.so*"
-		vlicense ${wrksrc}/COPYING.RUNTIME RUNTIME.LIBRARY.EXCEPTION
 	}
 }
 
@@ -537,7 +582,24 @@ libgo_package() {
 	nostrip=yes
 	pkg_install() {
 		vmove "usr/lib/libgo.so*"
-		vlicense ${wrksrc}/COPYING.RUNTIME RUNTIME.LIBRARY.EXCEPTION
+	}
+}
+
+libgphobos-devel_package() {
+	depends="libgphobos>=${_minorver}"
+	short_desc+=" - D library - development files"
+	pkg_install() {
+		vmove usr/lib/libgphobos.so
+		vmove usr/lib/libgphobos.a
+		vmove usr/lib/gcc/${_triplet}/${_minorver}/d21
+	}
+}
+
+libgphobos_package() {
+	short_desc+=" - D library"
+	pkg_install() {
+		vmove "usr/lib/libgphobos.so.*"
+		vmove usr/lib/libgphobos.spec
 	}
 }
 
@@ -553,7 +615,6 @@ libobjc_package() {
 	short_desc+=" - Objective-C library"
 	pkg_install() {
 		vmove "usr/lib/libobjc.so*"
-		vlicense ${wrksrc}/COPYING.RUNTIME RUNTIME.LIBRARY.EXCEPTION
 	}
 }
 
@@ -572,7 +633,6 @@ libquadmath_package() {
 	short_desc+=" - quadmath library"
 	pkg_install() {
 		vmove "usr/lib/libquadmath.so*"
-		vlicense ${wrksrc}/COPYING.RUNTIME RUNTIME.LIBRARY.EXCEPTION
 	}
 }
 
@@ -614,7 +674,6 @@ libgcc_package() {
 	noverifyrdeps=yes
 	pkg_install() {
 		vmove "usr/lib/libgcc_s.so*"
-		vlicense ${wrksrc}/COPYING.RUNTIME RUNTIME.LIBRARY.EXCEPTION
 	}
 }
 
@@ -645,7 +704,6 @@ libgomp_package() {
 	short_desc+=" - OpenMP v4.0 library"
 	pkg_install() {
 		vmove "usr/lib/libgomp*.so.*"
-		vlicense ${wrksrc}/COPYING.RUNTIME RUNTIME.LIBRARY.EXCEPTION
 	}
 }
 
@@ -700,7 +758,6 @@ libssp_package() {
 	short_desc+=" - SSP (StackSmashingProtection) library"
 	pkg_install() {
 		vmove "usr/lib/libssp.so*"
-		vlicense ${wrksrc}/COPYING.RUNTIME RUNTIME.LIBRARY.EXCEPTION
 	}
 }
 
@@ -718,6 +775,5 @@ libstdc++_package() {
 	short_desc+=" - Standard C++ Library"
 	pkg_install() {
 		vmove "usr/lib/libstdc++.so*"
-		vlicense ${wrksrc}/COPYING.RUNTIME RUNTIME.LIBRARY.EXCEPTION
 	}
 }
