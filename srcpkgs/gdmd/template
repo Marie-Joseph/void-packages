@@ -1,0 +1,27 @@
+# Template file for 'gdmd'
+pkgname=gdmd
+version=0.1.0
+revision=1
+#archs="i686 x86_64"
+wrksrc=gdmd-script-${version}
+#create_wrksrc=yes
+#build_style=gnu-makefile
+#configure_args=""
+#make_build_args=""
+#make_install_args="DESTDIR=${DESTDIR} prefix=/usr"
+#conf_files=""
+#make_dirs="/var/log/dir 0755 root root"
+hostmakedepends=""
+makedepends=""
+depends="gcc-gdc perl"
+short_desc="DMD-like frontend for GDC"
+maintainer="jts <jtsims@pm.me>"
+license="GPL-3.0-or-later"
+homepage="https://github.com/D-Programming-GDC/gdmd"
+distfiles="https://github.com/D-Programming-GDC/gdmd/archive/refs/tags/script-0.1.0.tar.gz"
+checksum=6c9891b7f2e41d8b6c0e89fab3ad32fb77bb3617760b33a4c23bca49197a026b
+
+do_install() {
+	vbin dmd-script gdmd
+	vman dmd-script.1 gdmd.1
+}
