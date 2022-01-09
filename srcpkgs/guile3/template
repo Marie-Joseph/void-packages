@@ -14,6 +14,7 @@ license="GPL-3.0-or-later, LGPL-3.0-or-later"
 homepage="https://www.gnu.org/software/guile"
 distfiles="${GNU_SITE}/guile/guile-${version}.tar.gz"
 checksum=c7935b7a29e42443f6a35d35cf20ffa7d028c399303f872cd1219598a83656ae
+replaces="guile guile1.8 libguile"
 
 alternatives="
  guile:guile:/usr/bin/guile3
